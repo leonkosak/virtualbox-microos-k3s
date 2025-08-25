@@ -36,9 +36,8 @@ detect_mode() {
 # Step 0: Ensure SELinux context
 # -------------------------------
 if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/dev/null 2>&1; then
-  log "Installing SELinux packages and Rancher MicroOS RPMs..."
+  log "Installing container-selinux..."
   sudo transactional-update pkg install -y container-selinux
-  sudo transactional-update pkg install -y https://rpm.rancher.io/k3s/stable/common/microos/noarch/container-selinux-2.119.2-1.microos.noarch.rpm
 
   if ! command -v semanage >/dev/null 2>&1; then
     log "Installing policycoreutils to get semanage..."
