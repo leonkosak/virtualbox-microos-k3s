@@ -36,10 +36,19 @@ detect_mode() {
 # Step 0: Ensure SELinux context
 # -------------------------------
 if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/dev/null 2>&1; then
-  log "Installing SELinux packages and Rancher RPMs..."
+  log "Installing SELinux packages and Rancher MicroOS RPMs..."
   sudo transactional-update pkg install -y container-selinux
   sudo transactional-update pkg install -y https://rpm.rancher.io/k3s/stable/common/microos/noarch/container-selinux-2.119.2-1.microos.noarch.rpm
-  warn "Reboot required. Please rerun the script after reboot."
+
+  # Apply SELinux context explicitly
+  if command -v semanage >/dev/null 2>&1; then
+    sudo semanage fcontext -a -t container_runtime_exec_t /usr/local/bin/k3s || true
+    sudo restorecon -v /usr/local/bin/k3s || true
+  else
+    warn "semanage not found. SELinux context may not be applied correctly."
+  fi
+
+  warn "Reboot required. Re-run script after reboot."
   exit 0
 fi
 
@@ -49,14 +58,14 @@ fi
 if ! rpm -q openssh >/dev/null 2>&1; then
   log "Installing openssh..."
   sudo transactional-update pkg install -y openssh
-  warn "Reboot required. Please rerun the script after reboot."
+  warn "Reboot required. Re-run script afterwards."
   exit 0
 fi
 
 if rpm -q zram-generator-defaults >/dev/null 2>&1; then
   log "Removing zram swap generator..."
   sudo transactional-update pkg remove -y zram-generator-defaults
-  warn "Reboot required. Please rerun the script after reboot."
+  warn "Reboot required. Re-run script afterwards."
   exit 0
 fi
 
