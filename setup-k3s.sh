@@ -5,10 +5,10 @@
 
 set -euo pipefail
 
-VM_IP="${1:-}"                # optional VM IP
-FORCE_MODE="${FORCE_MODE:-}"  # "nat" | "bridged"
-NAT_PORT="${NAT_PORT:-6443}"  # Host port forwarded to guest 6443
-K3S_VERSION="${K3S_VERSION:-}"# optional k3s version pin
+VM_IP="${1:-}"                 # optional VM IP
+FORCE_MODE="${FORCE_MODE:-}"   # "nat" | "bridged"
+NAT_PORT="${NAT_PORT:-6443}"   # Host port forwarded to guest 6443
+K3S_VERSION="${K3S_VERSION:-}" # optional k3s version pin
 HOSTNAME="$(hostname)"
 
 log()  { echo -e "\033[1;32m[INFO]\033[0m $*"; }
