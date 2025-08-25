@@ -17,8 +17,8 @@ NAT_PORT="${NAT_PORT:-6443}"
 K3S_VERSION="${K3S_VERSION:-}"
 HOSTNAME="$(hostname)"
 
-log()  { echo -e "\033[1;32m[INFO]\033[0m $*"; }
-warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
+log()  { echo -e "[1;32m[INFO][0m $*"; }
+warn() { echo -e "[1;33m[WARN][0m $*"; }
 
 # -------------------------------
 # Helper functions
@@ -40,13 +40,14 @@ if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/de
   sudo transactional-update pkg install -y container-selinux
   sudo transactional-update pkg install -y https://rpm.rancher.io/k3s/stable/common/microos/noarch/container-selinux-2.119.2-1.microos.noarch.rpm
 
-  # Apply SELinux context explicitly
-  if command -v semanage >/dev/null 2>&1; then
-    sudo semanage fcontext -a -t container_runtime_exec_t /usr/local/bin/k3s || true
-    sudo restorecon -v /usr/local/bin/k3s || true
-  else
-    warn "semanage not found. SELinux context may not be applied correctly."
+  if ! command -v semanage >/dev/null 2>&1; then
+    log "Installing policycoreutils to get semanage..."
+    sudo transactional-update pkg install -y policycoreutils
   fi
+
+  log "Applying SELinux context to /usr/local/bin/k3s..."
+  sudo semanage fcontext -a -t container_runtime_exec_t /usr/local/bin/k3s || true
+  sudo restorecon -v /usr/local/bin/k3s || true
 
   warn "Reboot required. Re-run script after reboot."
   exit 0
