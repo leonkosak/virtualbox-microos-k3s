@@ -9,10 +9,10 @@ set -euo pipefail
 # -------------------------------
 # Config
 # -------------------------------
-VM_IP="${1:-}"                # optional VM IP (for bridged mode)
-FORCE_MODE="${FORCE_MODE:-}"  # "nat" | "bridged" override
-NAT_PORT="${NAT_PORT:-6443}"  # forwarded host port for VirtualBox NAT
-K3S_VERSION="${K3S_VERSION:-}"# optional k3s version pin
+VM_IP="${1:-}"                 # optional VM IP (for bridged mode)
+FORCE_MODE="${FORCE_MODE:-}"   # "nat" | "bridged" override
+NAT_PORT="${NAT_PORT:-6443}"   # forwarded host port for VirtualBox NAT
+K3S_VERSION="${K3S_VERSION:-}" # optional k3s version pin
 HOSTNAME="$(hostname)"
 
 log()  { echo -e "\033[1;32m[INFO]\033[0m $*"; }
