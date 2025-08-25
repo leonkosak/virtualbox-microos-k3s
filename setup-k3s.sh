@@ -7,19 +7,19 @@
 set -euo pipefail
 
 # -------------------------------
-# Config
+# Configuration
 # -------------------------------
-VM_IP="${1:-}"                 # optional VM IP (for bridged mode)
-FORCE_MODE="${FORCE_MODE:-}"   # "nat" | "bridged" override
-NAT_PORT="${NAT_PORT:-6443}"   # forwarded host port for VirtualBox NAT
-K3S_VERSION="${K3S_VERSION:-}" # optional k3s version pin
+VM_IP="${1:-}"                # optional VM IP (for bridged mode)
+FORCE_MODE="${FORCE_MODE:-}"  # "nat" | "bridged" override
+NAT_PORT="${NAT_PORT:-6443}"  # forwarded host port for VirtualBox NAT
+K3S_VERSION="${K3S_VERSION:-}"# optional k3s version pin
 HOSTNAME="$(hostname)"
 
 log()  { echo -e "\033[1;32m[INFO]\033[0m $*"; }
 warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
 
 # -------------------------------
-# Helpers
+# Helper functions
 # -------------------------------
 detect_ip() { ip -4 route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}'; }
 in_subnet_10_0_2() { [[ "$1" =~ ^10\.0\.2\.[0-9]+$ ]]; }
@@ -31,7 +31,7 @@ detect_mode() {
 }
 
 # -------------------------------
-# Step 0: Ensure proper k3s security context
+# Step 0: Ensure k3s security context
 # -------------------------------
 if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/dev/null 2>&1; then
   log "Installing container-selinux and Rancher MicroOS RPMs..."
