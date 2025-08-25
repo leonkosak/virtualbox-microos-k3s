@@ -40,8 +40,8 @@ if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/de
   sudo transactional-update pkg install -y container-selinux
 
   if ! command -v semanage >/dev/null 2>&1; then
-    log "Installing policycoreutils to get semanage..."
-    sudo transactional-update pkg install -y policycoreutils
+    log "Installing policycoreutils-python-utils to get semanage..."
+    sudo transactional-update pkg install -y policycoreutils-python-utils
   fi
 
   log "Applying SELinux context to /usr/local/bin/k3s..."
