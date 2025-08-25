@@ -1,18 +1,27 @@
 #!/usr/bin/env bash
+# Force execution with Bash
+if [ -z "$BASH_VERSION" ]; then
+    echo "This script must be run with Bash. Try: bash $0" >&2
+    exit 1
+fi
+
+# -------------------------------
 # setup-k3s.sh
-# Idempotent single-node k3s setup on openSUSE MicroOS (Container Host)
-# NAT-aware for VirtualBox
-# Handles container-selinux/AppArmor requirements automatically
+# Fully idempotent single-node k3s setup on openSUSE MicroOS
+# Handles container-selinux/AppArmor automatically
+# NAT-aware for VirtualBox (bridged or NAT)
+# Safe for curl | bash usage
+# -------------------------------
 
 set -euo pipefail
 
 # -------------------------------
 # Configuration
 # -------------------------------
-VM_IP="${1:-}"                # optional VM IP (for bridged mode)
-FORCE_MODE="${FORCE_MODE:-}"  # "nat" | "bridged" override
-NAT_PORT="${NAT_PORT:-6443}"  # forwarded host port for VirtualBox NAT
-K3S_VERSION="${K3S_VERSION:-}"# optional k3s version pin
+VM_IP="${1:-}"                 # optional VM IP (for bridged mode)
+FORCE_MODE="${FORCE_MODE:-}"   # "nat" | "bridged" override
+NAT_PORT="${NAT_PORT:-6443}"   # forwarded host port for VirtualBox NAT
+K3S_VERSION="${K3S_VERSION:-}" # optional k3s version pin
 HOSTNAME="$(hostname)"
 
 log()  { echo -e "\033[1;32m[INFO]\033[0m $*"; }
