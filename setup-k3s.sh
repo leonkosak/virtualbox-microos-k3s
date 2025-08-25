@@ -2,7 +2,7 @@
 # setup-k3s.sh
 # Idempotent single-node k3s setup on openSUSE MicroOS (Container Host)
 # NAT-aware for VirtualBox
-# Auto-handles container-selinux/AppArmor requirements for k3s
+# Handles container-selinux/AppArmor requirements automatically
 
 set -euo pipefail
 
@@ -31,13 +31,13 @@ detect_mode() {
 }
 
 # -------------------------------
-# Step 0: Handle container-selinux / k3s labels
+# Step 0: Ensure proper k3s security context
 # -------------------------------
 if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/dev/null 2>&1; then
-  log "Installing container-selinux and Rancher MicroOS RPMs for proper k3s labeling..."
+  log "Installing container-selinux and Rancher MicroOS RPMs..."
   sudo transactional-update pkg install -y container-selinux
   sudo transactional-update pkg install -y https://rpm.rancher.io/k3s/stable/common/microos/noarch/k3s-common-*.rpm
-  warn "Reboot required to apply security labels. Re-run script after reboot."
+  warn "Reboot required. Re-run script after reboot."
   exit 0
 fi
 
