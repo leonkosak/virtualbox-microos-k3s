@@ -1,27 +1,20 @@
 #!/usr/bin/env bash
-# Force execution with Bash
+
+# Ensure execution with Bash
 if [ -z "$BASH_VERSION" ]; then
     echo "This script must be run with Bash. Try: bash $0" >&2
     exit 1
 fi
-
-# -------------------------------
-# setup-k3s.sh
-# Fully idempotent single-node k3s setup on openSUSE MicroOS
-# Handles container-selinux/AppArmor automatically
-# NAT-aware for VirtualBox (bridged or NAT)
-# Safe for curl | bash usage
-# -------------------------------
 
 set -euo pipefail
 
 # -------------------------------
 # Configuration
 # -------------------------------
-VM_IP="${1:-}"                 # optional VM IP (for bridged mode)
-FORCE_MODE="${FORCE_MODE:-}"   # "nat" | "bridged" override
-NAT_PORT="${NAT_PORT:-6443}"   # forwarded host port for VirtualBox NAT
-K3S_VERSION="${K3S_VERSION:-}" # optional k3s version pin
+VM_IP="${1:-}"
+FORCE_MODE="${FORCE_MODE:-}"
+NAT_PORT="${NAT_PORT:-6443}"
+K3S_VERSION="${K3S_VERSION:-}"
 HOSTNAME="$(hostname)"
 
 log()  { echo -e "\033[1;32m[INFO]\033[0m $*"; }
@@ -40,13 +33,13 @@ detect_mode() {
 }
 
 # -------------------------------
-# Step 0: Ensure k3s security context
+# Step 0: Ensure SELinux context
 # -------------------------------
 if [[ ! -f /usr/local/bin/k3s ]] || ! sudo restorecon -n /usr/local/bin/k3s >/dev/null 2>&1; then
-  log "Installing container-selinux and Rancher MicroOS RPMs..."
+  log "Installing SELinux packages and Rancher RPMs..."
   sudo transactional-update pkg install -y container-selinux
-  sudo transactional-update pkg install -y https://rpm.rancher.io/k3s/stable/common/microos/noarch/k3s-common-*.rpm
-  warn "Reboot required. Re-run script after reboot."
+  sudo transactional-update pkg install -y https://rpm.rancher.io/k3s/stable/common/microos/noarch/container-selinux-2.119.2-1.microos.noarch.rpm
+  warn "Reboot required. Please rerun the script after reboot."
   exit 0
 fi
 
@@ -56,33 +49,35 @@ fi
 if ! rpm -q openssh >/dev/null 2>&1; then
   log "Installing openssh..."
   sudo transactional-update pkg install -y openssh
-  warn "Reboot required. Re-run script afterwards."
+  warn "Reboot required. Please rerun the script after reboot."
   exit 0
 fi
 
 if rpm -q zram-generator-defaults >/dev/null 2>&1; then
   log "Removing zram swap generator..."
   sudo transactional-update pkg remove -y zram-generator-defaults
-  warn "Reboot required. Re-run script afterwards."
+  warn "Reboot required. Please rerun the script after reboot."
   exit 0
 fi
 
 # -------------------------------
 # Step 2: Kernel modules & sysctl
 # -------------------------------
-sudo tee /etc/modules-load.d/kubernetes.conf >/dev/null <<'EOF'
+sudo tee /etc/modules-load.d/kubernetes.conf >/dev/null <<EOF
 br_netfilter
 overlay
 EOF
+
 for mod in br_netfilter overlay; do
   lsmod | grep -q "$mod" || sudo modprobe "$mod" || true
 done
 
-sudo tee /etc/sysctl.d/90-kubernetes.conf >/dev/null <<'EOF'
+sudo tee /etc/sysctl.d/90-kubernetes.conf >/dev/null <<EOF
 net.ipv4.ip_forward=1
 net.bridge.bridge-nf-call-iptables=1
 net.bridge.bridge-nf-call-ip6tables=1
 EOF
+
 sudo sysctl --system >/dev/null
 
 # -------------------------------
@@ -97,6 +92,7 @@ log "Network mode: $MODE, VM IP: $VM_IP"
 # -------------------------------
 sudo mkdir -p /etc/rancher/k3s
 CONFIG_FILE=/etc/rancher/k3s/config.yaml
+
 if [[ ! -f "$CONFIG_FILE" ]]; then
   log "Creating k3s config..."
   sudo tee "$CONFIG_FILE" >/dev/null <<EOF
@@ -109,18 +105,18 @@ EOF
 fi
 
 # -------------------------------
-# Step 5: Install/upgrade k3s
+# Step 5: Install or upgrade k3s
 # -------------------------------
 if ! command -v k3s >/dev/null 2>&1; then
   log "Installing k3s..."
   [[ -n "$K3S_VERSION" ]] && curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" sh - || curl -sfL https://get.k3s.io | sh -
 else
-  log "k3s already installed → upgrading if needed..."
+  log "Upgrading k3s if needed..."
   [[ -n "$K3S_VERSION" ]] && curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="$K3S_VERSION" sh - || curl -sfL https://get.k3s.io | sh -
 fi
 
 # -------------------------------
-# Step 6: kubeconfig
+# Step 6: kubeconfig setup
 # -------------------------------
 mkdir -p "${HOME}/.kube"
 sudo cp /etc/rancher/k3s/k3s.yaml "${HOME}/.kube/config"
